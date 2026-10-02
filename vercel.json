@@ -1,6 +1,6 @@
 {
   "rewrites": [
-    { "source": "/__proxy/:path*", "destination": "/api/proxy?__path=:path*" },
+    { "source": "/__proxy/(.*)", "destination": "/api/proxy?__path=$1" },
     {
       "source": "/:path((?!api/|__proxy/|assets/|sw\\.js).*)",
       "has": [{ "type": "header", "key": "sec-fetch-dest", "value": "iframe" }],
