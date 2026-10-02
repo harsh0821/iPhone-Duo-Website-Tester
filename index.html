@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>iPhone Duo Website Tester</title>
+    <meta name="description" content="See how any website looks on the iPhone Duo, folded and unfolded, in every orientation." />
+    <meta name="theme-color" content="#cfcbc4" />
+    <link rel="icon" href="/assets/logo-apple.svg" type="image/svg+xml" />
+    <link rel="preload" href="/assets/bg.png" as="image" />
+    <link rel="preload" href="/assets/bezel-outer.png" as="image" />
+    <link rel="preload" href="/assets/bezel-inner.png" as="image" />
+    <style>
+      /* Critical: black from the very first frame while the splash is queued. */
+      html.splash,
+      html.splash body { background: #000; }
+      html.splash .splash-veil { display: block; position: fixed; inset: 0; z-index: 5; }
+      html.splash .splash-veil__black { position: absolute; inset: 0; background: #000; }
+    </style>
+    <script>
+      // Queue the splash before first paint: once per session (?splash=1 forces it).
+      try {
+        var q = new URLSearchParams(location.search);
+        var calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (q.get('splash') === '1' || (!calm && q.get('splash') !== '0' && !sessionStorage.getItem('duo.splash.seen'))) {
+          document.documentElement.classList.add('splash');
+          var narrow = innerWidth < 700 || innerWidth / innerHeight < 0.9;
+          [narrow ? '/assets/splash/apple-inner-upright.jpg' : '/assets/splash/apple-inner.jpg', '/assets/splash/apple-outer.jpg'].forEach(function (href) {
+            var l = document.createElement('link');
+            l.rel = 'preload';
+            l.as = 'image';
+            l.href = href;
+            document.head.appendChild(l);
+          });
+        }
+      } catch (e) {}
+    </script>
+  </head>
+  <body>
+    <div class="backdrop" aria-hidden="true"></div>
+    <img class="header-shade" src="/assets/header-shade.png" alt="" aria-hidden="true" />
+
+    <!-- Desktop: fixed 1920 × 1000 canvas, scaled to fit the window -->
+    <div class="stage" id="stage">
+      <header class="brand">
+        <img src="/assets/logo-apple-white.svg" width="48" height="48" alt="" />
+        <h1>iPhone Duo Website Tester</h1>
+      </header>
+
+      <button class="share" type="button" data-share>
+        <span data-share-label>Share</span>
+        <img src="/assets/icon-share.svg" width="23" height="20" alt="" />
+      </button>
+
+      <section class="panel test-panel" aria-label="Test your website">
+        <div class="test-panel__inner">
+          <div class="test-panel__group">
+            <p class="panel-label">TEST YOUR WEBSITE</p>
+            <h2 class="test-panel__headline">See how your<br />website looks on<br />iPhone Duo.</h2>
+            <form class="url-field" data-url-form novalidate>
+              <label class="url-field__main">
+                <img src="/assets/icon-link.svg" width="32" height="32" alt="" />
+                <span class="sr-only">Website URL</span>
+                <input data-url-input type="url" inputmode="url" autocomplete="url" spellcheck="false" placeholder="https://yourwebsite.com" />
+              </label>
+              <button class="url-field__submit" type="submit" aria-label="Test website">
+                <img src="/assets/m/icon-arrow-right.svg" width="22" height="22" alt="" />
+              </button>
+            </form>
+          </div>
+          <div class="test-panel__group">
+            <p class="recent-heading">POPULAR WEBSITES</p>
+            <ul class="recent-list" data-recents="desktop"></ul>
+          </div>
+        </div>
+      </section>
+
+      <aside class="panel layouts-panel" aria-label="Layouts">
+        <div class="layouts-panel__inner">
+          <p class="panel-label layouts-panel__title">Layouts</p>
+          <div class="layouts-panel__body">
+            <div class="layouts" id="layouts" role="radiogroup" aria-label="Screen layout"></div>
+
+            <div class="stat">
+              <img src="/assets/icon-viewport.svg" width="56" height="56" alt="" />
+              <div class="stat__text stat__text--viewport">
+                <span class="stat__label">Viewport</span>
+                <span class="stat__value" data-stat="viewport"></span>
+              </div>
+            </div>
+            <img class="stat-divider" src="/assets/stat-divider.svg" alt="" aria-hidden="true" />
+            <div class="stat">
+              <img src="/assets/icon-aspect.svg" width="56" height="56" alt="" />
+              <div class="stat__text stat__text--aspect">
+                <span class="stat__label">Aspect ratio</span>
+                <span class="stat__value" data-stat="ratio"></span>
+              </div>
+            </div>
+            <img class="stat-divider" src="/assets/stat-divider.svg" alt="" aria-hidden="true" />
+            <div class="status" data-status role="status" aria-live="polite">
+              <span class="status__dot"><img src="/assets/status-dot.svg" width="20.5882" height="20.5882" alt="" /></span>
+              <div class="status__text">
+                <span class="status__title" data-status-title></span>
+                <span class="status__detail" data-status-detail></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <!-- Mobile: 420 px-wide design, scaled to the screen width, scrolls -->
+    <div class="m-root" id="m-root">
+      <header class="m-brand">
+        <img src="/assets/m/logo-apple-title.svg" width="48" height="48" alt="" />
+        <h1>iPhone Duo Website Tester</h1>
+      </header>
+
+      <div class="m-device-slot" id="m-slot" aria-hidden="true"></div>
+
+      <section class="m-panel" aria-label="Test your website">
+        <div class="m-panel__header">
+          <p class="m-label">TEST YOUR WEBSITE</p>
+          <h2 class="m-headline">See how your website looks<br />on iPhone Duo.</h2>
+          <form class="m-url" data-url-form novalidate>
+            <img src="/assets/m/icon-link.svg" width="16.701" height="16.701" alt="" />
+            <label class="m-url__field">
+              <span class="sr-only">Website URL</span>
+              <input data-url-input type="url" inputmode="url" autocomplete="url" spellcheck="false" placeholder="https://yourwebsite.com" />
+            </label>
+            <button class="m-url__submit" type="submit" aria-label="Test website">
+              <img src="/assets/m/icon-arrow-right.svg" width="14.845" height="14.845" alt="" />
+            </button>
+          </form>
+        </div>
+
+        <div class="m-config">
+          <div class="m-select">
+            <button class="m-select__trigger" id="m-select-trigger" type="button" aria-haspopup="listbox" aria-expanded="false" aria-controls="m-select-menu">
+              <span class="m-select__main">
+                <span class="m-select__icon" id="m-select-icon"></span>
+                <span class="m-select__label" id="m-select-label"></span>
+              </span>
+              <img class="m-select__chevron" src="/assets/m/icon-chevron-down.svg" width="14.845" height="14.845" alt="" />
+            </button>
+            <div class="m-select__menu" id="m-select-menu" role="listbox" aria-label="Screen layout" tabindex="-1" hidden></div>
+          </div>
+
+          <div class="m-specs">
+            <div class="m-spec">
+              <img src="/assets/m/icon-monitor.svg" width="16.701" height="16.701" alt="" />
+              <div class="m-spec__text">
+                <span class="m-spec__label">Viewport</span>
+                <span class="m-spec__value" data-stat="viewport"></span>
+              </div>
+            </div>
+            <img class="m-spec-divider" src="/assets/m/stat-divider.svg" alt="" aria-hidden="true" />
+            <div class="m-spec">
+              <img src="/assets/m/icon-maximize.svg" width="16.701" height="16.701" alt="" />
+              <div class="m-spec__text">
+                <span class="m-spec__label">Aspect ratio</span>
+                <span class="m-spec__value" data-stat="ratio"></span>
+              </div>
+            </div>
+            <img class="m-spec-divider" src="/assets/m/stat-divider.svg" alt="" aria-hidden="true" />
+            <div class="m-spec m-status" data-status role="status" aria-live="polite">
+              <span class="status__dot m-status__dot"><img src="/assets/m/status-dot.svg" width="9.278" height="9.278" alt="" /></span>
+              <div class="m-spec__text m-status__text">
+                <span class="m-status__title" data-status-title></span>
+                <span class="m-spec__label m-status__detail" data-status-detail></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <img class="m-panel-divider" src="/assets/m/panel-divider.svg" alt="" aria-hidden="true" />
+
+        <div class="m-recent">
+          <p class="m-recent__heading">POPULAR WEBSITES</p>
+          <ul class="m-recent__list" data-recents="mobile"></ul>
+        </div>
+      </section>
+    </div>
+
+    <!-- The devices live in one layer that mirrors whichever layout is active,
+         so switching layouts never reloads the live website. -->
+    <div class="splash-veil" aria-hidden="true">
+      <i class="splash-veil__near"></i>
+      <i class="splash-veil__far"></i>
+      <i class="splash-veil__black"></i>
+    </div>
+    <div class="device-layer" id="device-layer"></div>
+
+    <script type="module" src="/src/js/main.js"></script>
+  </body>
+</html>

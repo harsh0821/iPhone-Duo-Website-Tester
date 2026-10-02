@@ -1,0 +1,143 @@
+/* First-visit splash. html.splash is set by the inline script in <head>
+   before first paint, so the page never flashes before the veil is up. */
+
+/* The veil: a light and a heavy fixed-radius blur under solid black. Each layer
+   only fades (opacity), which the compositor animates without repainting. */
+.splash-veil {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+  cursor: pointer;
+}
+
+html.splash .splash-veil {
+  display: block;
+}
+
+.splash-veil > i {
+  position: absolute;
+  inset: 0;
+  will-change: opacity;
+}
+
+.splash-veil__near {
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+
+.splash-veil__far {
+  -webkit-backdrop-filter: blur(40px) saturate(0.9);
+  backdrop-filter: blur(40px) saturate(0.9);
+}
+
+.splash-veil__black {
+  background: #000;
+}
+
+/* The devices ride above the veil while it plays. */
+html.splash .device-layer {
+  z-index: 6;
+  overflow: visible;
+}
+
+/* Nested so position, scale and anchor each animate on their own curve. */
+.splash-rig,
+.splash-scale,
+.splash-anchor {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+  will-change: transform;
+}
+
+.splash-rig {
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+.splash-3d {
+  position: absolute;
+  inset: 0;
+  perspective: 2200px;
+  transform-style: preserve-3d;
+}
+
+.splash-half,
+.splash-flap {
+  position: absolute;
+  top: 0;
+  height: 100%;
+}
+
+/* Each half shows its side of one full device build, cut on the hinge line.
+   The cut is only on the hinge side so the bezel's outer edge is never clipped. */
+.splash-half--right {
+  /* 1 px under the flap so the hinge never shows a hairline gap. */
+  clip-path: inset(-80px -80px -80px -1px);
+}
+
+.splash-flap {
+  left: 0;
+  transform-origin: 100% 50%;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+.splash-face {
+  position: absolute;
+  inset: 0;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+.splash-face--front {
+  clip-path: inset(-80px 0 -80px -80px);
+}
+
+.splash-face--back {
+  transform: rotateY(180deg);
+}
+
+.splash-build {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+/* Screens: black glass with a faint sheen, or the site still when it loaded. */
+.splash-screen {
+  position: absolute;
+  overflow: hidden;
+  background:
+    linear-gradient(125deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0) 38%),
+    #000;
+  /* Sheen layer stretched; the site still (inline background-image) covers from the top. */
+  background-size: 100% 100%, cover;
+  background-position: 0 0, 50% 0;
+  background-repeat: no-repeat;
+}
+
+.splash-bezel {
+  position: absolute;
+  max-width: none;
+  user-select: none;
+}
+
+/* Pre-painted shadows sit flat under the 3D body and never get clipped. */
+.splash-shadow {
+  position: absolute;
+  pointer-events: none;
+  will-change: opacity;
+}
+
+/* Edge-on shading, shaped exactly like the bezel. */
+.splash-shade {
+  position: absolute;
+  background: #000;
+  opacity: 0;
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  will-change: opacity;
+}

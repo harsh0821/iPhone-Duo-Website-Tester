@@ -1,0 +1,411 @@
+/* Mobile layout, 420 px canvas. Values from Figma frames 230:6807 / 230:8407
+   (their 44 px mock status bar is dropped: the real phone has its own). */
+
+.m-root {
+  min-height: calc(100vh / var(--m-scale, 1));
+  padding: calc(16px + env(safe-area-inset-top)) 0 30px;
+  /* The oversized background photo must never widen the page. */
+  overflow: clip;
+}
+
+/* The same photo as desktop, placed as in the mobile frames. */
+.m-root::before {
+  content: '';
+  position: absolute;
+  left: -833.2px;
+  top: -116px;
+  width: 2086.5px;
+  height: 1391px;
+  background: url('/assets/bg.png') 0 0 / 100% 100% no-repeat;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.m-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  transform: translateX(0.5px);
+}
+
+.m-brand h1 {
+  font-size: 20px;
+  font-weight: var(--weight-semibold);
+  line-height: normal;
+  color: #282828;
+  white-space: nowrap;
+}
+
+/* Empty box the device is drawn over; its height follows the device. */
+.m-device-slot {
+  height: var(--slot-h, 404px);
+  margin-top: var(--slot-gap, 44px);
+  transition: height var(--spring-ms) var(--spring), margin-top var(--spring-ms) var(--spring);
+}
+
+.m-panel {
+  position: relative;
+  width: 360px;
+  margin: 54px auto 0;
+  padding: 18.557px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  border-radius: 20px;
+  background: var(--glass-panel);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  box-shadow: var(--glass-edge);
+}
+
+.m-panel__header {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.m-label {
+  font-family: var(--font-inter);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: normal;
+  color: rgba(0, 0, 0, 0.5);
+}
+
+.m-headline {
+  width: 322px;
+  max-width: 100%;
+  font-size: 25px;
+  font-weight: 510;
+  line-height: 1.115;
+  color: var(--text-strong);
+}
+
+.m-url {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 11.134px;
+  padding: 7.423px 7.423px 7.423px 14.845px;
+  border: 0.928px solid rgba(0, 0, 0, 0.05);
+  border-radius: 92.784px;
+  background: #fff;
+}
+
+.m-url > img {
+  flex: none;
+}
+
+.m-url__field {
+  flex: 1 0 0;
+  min-width: 1px;
+  display: flex;
+}
+
+.m-url input {
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font-family: var(--font-inter);
+  /* 16 px keeps iOS from zooming on focus; scaled back to the design's 13.918 px. */
+  font-size: 16px;
+  width: calc(100% / 0.86988);
+  transform: scale(0.86988);
+  transform-origin: 0 50%;
+  line-height: normal;
+  color: #1d1c1a;
+}
+
+.m-url input::placeholder {
+  color: rgba(0, 0, 0, 0.5);
+  opacity: 1;
+}
+
+.m-url__submit {
+  flex: none;
+  width: 37.113px;
+  height: 37.113px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 18.557px;
+  background: var(--text-strong);
+  transition: transform 200ms var(--ease-out);
+}
+
+.m-url__submit:active {
+  transform: scale(0.92);
+}
+
+/* ---------------------------------------------------------------- config card */
+
+.m-config {
+  position: relative;
+  width: 100%;
+  height: 108.557px;
+  display: flex;
+  flex-direction: column;
+  gap: 12.99px;
+  padding: 14.845px;
+  border: 0.928px solid rgba(255, 255, 255, 0.3);
+  border-radius: 20px;
+  background: var(--glass-strong);
+  -webkit-backdrop-filter: blur(11.134px);
+  backdrop-filter: blur(11.134px);
+  z-index: 3;
+}
+
+.m-select {
+  position: relative;
+}
+
+.m-select__trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 11.134px 14.845px;
+  border: 0.928px solid rgba(0, 0, 0, 0.05);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.m-select__main {
+  display: flex;
+  align-items: center;
+  gap: 9.278px;
+}
+
+.m-select__icon {
+  --k: 0.298232; /* 16.701 / 56 */
+  display: flex;
+}
+
+.m-select__label,
+.m-option__label {
+  font-family: var(--font-inter);
+  font-size: 13.918px;
+  font-weight: 600;
+  line-height: normal;
+  color: #1d1c1a;
+  white-space: nowrap;
+}
+
+.m-select__chevron {
+  transition: transform 260ms var(--ease-apple);
+}
+
+.m-select__trigger[aria-expanded='true'] .m-select__chevron {
+  transform: rotate(180deg);
+}
+
+/* Not in the Figma: a list in the selector's own white card style. */
+.m-select__menu {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 6px);
+  padding: 5px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border: 0.928px solid rgba(0, 0, 0, 0.05);
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 18px 40px rgba(17, 24, 32, 0.16), 0 2px 6px rgba(17, 24, 32, 0.06);
+  transform-origin: 50% 0;
+  z-index: 5;
+}
+
+.m-select__menu:focus {
+  outline: none;
+}
+
+.m-select__menu[hidden] {
+  display: none;
+}
+
+.m-select__menu.is-entering {
+  animation: m-menu-in 220ms var(--ease-out) both;
+}
+
+.m-select__menu.is-leaving {
+  animation: m-menu-out 150ms ease-in both;
+}
+
+@keyframes m-menu-in {
+  from { opacity: 0; transform: translateY(-6px) scale(0.98); }
+}
+
+@keyframes m-menu-out {
+  to { opacity: 0; transform: translateY(-4px) scale(0.99); }
+}
+
+.m-option {
+  --k: 0.4286; /* 24 / 56 */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 10px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.m-option__main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.m-option.is-active {
+  background: #f2f3f5;
+}
+
+.m-option__check {
+  width: 16px;
+  height: 16px;
+  color: var(--text-strong);
+  opacity: 0;
+}
+
+.m-option[aria-selected='true'] .m-option__check {
+  opacity: 1;
+}
+
+.m-specs {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.m-spec {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 7.423px;
+}
+
+.m-spec > img {
+  flex: none;
+}
+
+.m-spec__text {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.856px;
+  font-family: var(--font-inter);
+  line-height: normal;
+  white-space: nowrap;
+}
+
+.m-spec__label {
+  font-size: 9.278px;
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.5);
+}
+
+.m-spec__value {
+  font-size: 11.134px;
+  font-weight: 700;
+  color: #1d1c1a;
+}
+
+.m-spec-divider {
+  flex: none;
+  width: 25.979px;
+  height: 0.928px;
+  transform: rotate(90deg);
+  margin: 0 -12.99px;
+}
+
+.m-status {
+  flex: 0 1 auto;
+}
+
+.m-status__dot {
+  width: 9.278px;
+  height: 9.278px;
+}
+
+.m-status__title {
+  font-size: 10.206px;
+  font-weight: 700;
+  color: #1d1c1a;
+}
+
+.m-status__detail {
+  max-width: 96px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 400;
+}
+
+.m-panel-divider {
+  width: 100%;
+  height: 1px;
+}
+
+/* ---------------------------------------------------------------- recent */
+
+.m-recent {
+  width: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 15.721px;
+}
+
+.m-recent__heading {
+  font-size: 11.688px;
+  line-height: normal;
+  color: var(--text-muted);
+}
+
+.m-recent__list {
+  display: flex;
+  flex-direction: column;
+  gap: 5.24px;
+}
+
+.m-recent__list .recent {
+  gap: 16.183px;
+  padding: 10.48px 15.721px;
+  border-radius: 14.41px;
+}
+
+.m-recent__list .recent__icon {
+  width: 31.441px;
+  height: 31.441px;
+}
+
+.m-recent__list .recent__icon--letter {
+  font-size: 14px;
+}
+
+.m-recent__list .recent__url {
+  font-size: 15.721px;
+}
+
+.m-recent__list .recent__go {
+  width: 15.721px;
+  height: 15.721px;
+}
+
+.m-recent__list .recent-empty {
+  padding: 10.48px 15.721px;
+  border-radius: 14.41px;
+  background: var(--glass-row);
+  font-size: 14px;
+}
+
+/* Off Apple devices SF falls back to Inter, which runs wider: tighten it so
+   the headline keeps the design's two lines. */
+html:not(.has-sf) .m-headline {
+  letter-spacing: -0.02em;
+}

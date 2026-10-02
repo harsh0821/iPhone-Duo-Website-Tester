@@ -1,0 +1,17 @@
+{
+  "name": "iphone-duo-tester",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@fontsource-variable/inter": "^5.1.0"
+  },
+  "devDependencies": {
+    "vite": "^6.0.0"
+  }
+}

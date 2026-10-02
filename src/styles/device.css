@@ -1,0 +1,143 @@
+/* ---------------------------------------------------------------- devices */
+
+.device {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 50% 50%;
+  pointer-events: auto;
+  will-change: transform, opacity;
+}
+
+.device[data-active='false'] {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.device__shadow {
+  position: absolute;
+  inset: 0;
+}
+
+.device__shadow > * {
+  position: absolute;
+}
+
+.device__screen {
+  position: absolute;
+  overflow: hidden;
+  background: #000;
+  isolation: isolate;
+}
+
+.device__bezel {
+  position: absolute;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Split view: the black container sits above the bezel, as in Figma. */
+.device--inner[data-split='true'] .device__screen {
+  z-index: 1;
+  background: #000;
+}
+
+.screen__content {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+}
+
+.pane {
+  position: absolute;
+  top: 0;
+  overflow: hidden;
+  background: var(--pane-bg, #fff);
+  transition-property: left, width, border-radius;
+}
+
+.pane__inner {
+  position: absolute;
+  inset: 0;
+}
+
+.pane__frame {
+  position: absolute;
+  border: 0;
+  background: transparent;
+  transform-origin: 0 0;
+}
+
+.pane__overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 32px;
+  text-align: center;
+  font-family: var(--font-sf);
+  background: #f2f2f7;
+  color: #8a8a8e;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 260ms var(--ease-out);
+}
+
+.pane[data-state='empty'] .pane__overlay,
+.pane[data-state='loading'] .pane__overlay,
+.pane[data-state='error'] .pane__overlay {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.pane[data-state='loading'] .pane__overlay {
+  background: var(--pane-bg, #fff);
+}
+
+.pane__message {
+  display: none;
+  max-width: 300px;
+  font-size: 17px;
+  line-height: 1.35;
+}
+
+.pane__message strong {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 19px;
+  font-weight: var(--weight-semibold);
+  color: #3a3a3c;
+}
+
+.pane[data-state='empty'] .pane__message--empty,
+.pane[data-state='error'] .pane__message--error {
+  display: block;
+}
+
+.pane__spinner {
+  display: none;
+  position: relative;
+  width: 36px;
+  height: 36px;
+}
+
+.pane[data-state='loading'] .pane__spinner {
+  display: block;
+}
+
+.pane__spinner i {
+  position: absolute;
+  left: 16.5px;
+  top: 0;
+  width: 3px;
+  height: 10px;
+  border-radius: 2px;
+  background: #8e8e93;
+  transform-origin: 1.5px 18px;
+  animation: spinner-fade 0.8s linear infinite;
+}
+
+@keyframes spinner-fade {
+  from { opacity: 1; }
+  to { opacity: 0.18; }
+}

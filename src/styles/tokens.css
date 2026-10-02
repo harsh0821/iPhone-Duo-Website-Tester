@@ -1,0 +1,41 @@
+/* Design tokens, all taken from the Figma "Final Design" frames. */
+:root {
+  /* Type. SF Pro renders natively on Apple devices; Inter is the self-hosted fallback. */
+  --font-sf: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro', 'Inter Variable', system-ui, sans-serif;
+  --font-inter: 'Inter Variable', Inter, system-ui, sans-serif;
+  --weight-semibold: 590;
+
+  /* Text */
+  --text-strong: #111820;
+  --text-label: #141c24;
+  --text-placeholder: #7b8896;
+  --text-muted: #66717d;
+  --text-row: #515a63;
+  --text-meta: #515151;
+
+  /* Surfaces */
+  --glass-panel: rgba(255, 255, 255, 0.4);
+  --glass-strong: rgba(255, 255, 255, 0.7);
+  --glass-field: rgba(255, 255, 255, 0.74);
+  --glass-row: rgba(255, 255, 255, 0.36);
+
+  /* Accents */
+  --blue: #0071e3;
+  --green: #10b767;
+  --amber: #f5a524;
+  --red: #ff3b30;
+  --grey: #a3acb6;
+
+  /* Radii */
+  --radius-panel: 32px;
+  --radius-row: 22px;
+  --radius-pill: 9999px;
+
+  /* Frosted glass visible in the Figma render (its code export omits the blur). */
+  --glass-blur: blur(24px) saturate(1.15);
+  --glass-edge: inset 0 0 0 1px rgba(255, 255, 255, 0.42);
+
+  /* Motion */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-apple: cubic-bezier(0.32, 0.72, 0, 1);
+}
