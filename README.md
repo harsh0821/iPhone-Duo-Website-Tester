@@ -1,5 +1,7 @@
 # iPhone Duo Website Tester
 
+**Live:** https://iphone-duo-website-tester.vercel.app
+
 Paste a URL and see the live website on the iPhone Duo in all five screen modes:
 Outer Portrait, Outer Landscape, Inner Portrait, Inner Landscape and Inner Split.
 The UI is a 1:1 build of the Figma "Final Design" section (1920 × 1000 frames).
@@ -11,7 +13,7 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:5173. `npm run build` outputs a static site to `dist/`; the
+Open http://localhost:5173. Every push to `main` deploys to Vercel automatically. `npm run build` outputs a static site to `dist/`; the
 `/api` folder deploys as Vercel serverless functions (`vercel.json` holds the rewrites).
 
 ## Viewports
