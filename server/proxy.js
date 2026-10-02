@@ -19,6 +19,10 @@ const PASS_REQUEST_HEADERS = [
 function targetFromRequest(req) {
   const url = new URL(req.url, 'http://local');
   if (url.pathname.startsWith(PROXY_PREFIX)) {
+    // Vercel hands over the original path with the rewrite's own params merged
+    // into the query: drop those so only the site's query string remains.
+    url.searchParams.delete('__path');
+    url.searchParams.delete('__fallback');
     return fromProxyPath(url.pathname.slice(PROXY_PREFIX.length), url.search);
   }
   // Vercel rewrite: /__proxy/:path* -> /api/proxy?__path=:path*
