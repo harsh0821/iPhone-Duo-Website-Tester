@@ -2,7 +2,7 @@
   "rewrites": [
     { "source": "/__proxy/:path*", "destination": "/api/proxy?__path=:path*" },
     {
-      "source": "/:path((?!api/|__proxy/|assets/|sw\.js).*)",
+      "source": "/:path((?!api/|__proxy/|assets/|sw\\.js).*)",
       "has": [{ "type": "header", "key": "sec-fetch-dest", "value": "iframe" }],
       "destination": "/api/proxy?__fallback=:path"
     }
