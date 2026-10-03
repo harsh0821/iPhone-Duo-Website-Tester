@@ -24,8 +24,11 @@ const SEEN_KEY = 'duo.splash.seen';
 // Timeline, [delay, duration] in ms. Everything settles together at ~2900.
 const T = {
   appear: [0, 700],
-  scale: [150, 2700],
-  move: [900, 1950],
+  // Position and size share one clock and one curve: a single straight glide.
+  flight: [200, 2650],
+  // Narrow screens start the open phone sideways: it turns upright once it's
+  // mostly folded, about its own pivot, so the turn adds no drift.
+  turn: [1650, 1200],
   fold: [1000, 1700],
   black: [250, 1900],
   blurFar: [500, 1900],
@@ -44,8 +47,8 @@ const SCREENS = {
 };
 const EASE = {
   appear: 'cubic-bezier(0.25, 0.1, 0.25, 1)',
-  scale: 'cubic-bezier(0.45, 0, 0.2, 1)',
-  move: 'cubic-bezier(0.6, 0, 0.25, 1)',
+  flight: 'cubic-bezier(0.45, 0, 0.15, 1)',
+  turn: 'cubic-bezier(0.5, 0, 0.2, 1)',
   fold: 'cubic-bezier(0.55, 0, 0.25, 1)',
   black: 'cubic-bezier(0.4, 0, 0.3, 1)',
   blur: 'cubic-bezier(0.35, 0, 0.25, 1)',
@@ -244,25 +247,35 @@ export async function playSplash({ layer, target, real, center, startWidth, star
   const body = rig.querySelector('.splash-3d');
   const folds = target.device === 'outer';
 
-  // Start: unfolded, centred, as large as the screen allows.
+  // Start: unfolded and centred, at 90% of the largest size the screen allows.
   const upright = Math.abs(startRotate) === 90;
-  const s0 = Math.min(startWidth / (upright ? H : W), startHeight / (upright ? W : H));
+  const s0 = Math.min(startWidth / (upright ? H : W), startHeight / (upright ? W : H)) * 0.9;
   // End: identical to the live device. Folded, the outer face is drawn at k.
   const sEnd = folds ? target.scale / k : target.scale;
-  const anchorEnd = folds ? { x: closed.x + closed.width / 2, y: closed.y + closed.height / 2 } : { x: W / 2, y: H / 2 };
+
+  // One pivot for the whole flight: the half that stays put when folding (the
+  // outer phone). It travels in a straight line on the same curve as the scale,
+  // so the phone never wanders; only the cover swings over it.
+  const pivot = folds ? { x: closed.x + closed.width / 2, y: closed.y + closed.height / 2 } : { x: W / 2, y: H / 2 };
+  const rad = (startRotate * Math.PI) / 180;
+  const ox = (pivot.x - W / 2) * s0;
+  const oy = (pivot.y - H / 2) * s0;
+  const from = {
+    x: center.x + ox * Math.cos(rad) - oy * Math.sin(rad),
+    y: center.y + ox * Math.sin(rad) + oy * Math.cos(rad),
+  };
+  anchorEl.style.transform = `translate(${-pivot.x}px, ${-pivot.y}px)`;
 
   run(rig, [{ opacity: 0 }, { opacity: 1 }], T.appear, EASE.appear);
+  // Position, size and turn are separate properties, so each keeps its own clock.
   run(rig, [
-    { transform: `translate(${center.x}px, ${center.y}px) rotate(${startRotate}deg)` },
-    { transform: `translate(${target.cx}px, ${target.cy}px) rotate(${target.rotate}deg)` },
-  ], T.move, EASE.move);
-  run(scaleEl, [{ transform: `scale(${s0 * 1.04})` }, { transform: `scale(${sEnd})` }], T.scale, EASE.scale);
+    { transform: `translate(${from.x}px, ${from.y}px)` },
+    { transform: `translate(${target.cx}px, ${target.cy}px)` },
+  ], T.flight, EASE.flight);
+  run(scaleEl, [{ scale: `${s0}` }, { scale: `${sEnd}` }], T.flight, EASE.flight);
+  run(scaleEl, [{ rotate: `${startRotate}deg` }, { rotate: `${target.rotate}deg` }], T.turn, EASE.turn);
 
   if (folds) {
-    run(anchorEl, [
-      { transform: `translate(${-W / 2}px, ${-H / 2}px)` },
-      { transform: `translate(${-anchorEnd.x}px, ${-anchorEnd.y}px)` },
-    ], T.fold, EASE.fold);
     run(rig.querySelector('.splash-flap'), [
       { transform: 'translateZ(2px) rotateY(0deg)' },
       { transform: 'translateZ(2px) rotateY(180deg)' },
@@ -275,7 +288,6 @@ export async function playSplash({ layer, target, real, center, startWidth, star
     run(frontShade, [{ opacity: 0 }, { opacity: 0.55, offset: 0.5 }, { opacity: 0.55 }], T.fold, EASE.fold);
     run(backShade, [{ opacity: 0.55 }, { opacity: 0.55, offset: 0.5 }, { opacity: 0 }], T.fold, EASE.fold);
   } else {
-    anchorEl.style.transform = `translate(${-W / 2}px, ${-H / 2}px)`;
     closedShadow.style.opacity = '0';
   }
 

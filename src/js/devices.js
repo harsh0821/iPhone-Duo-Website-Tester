@@ -5,7 +5,7 @@ import { DEVICES, MODES } from './modes.js';
 import { Pane } from './pane.js';
 import { spring, prefersReducedMotion } from './spring.js';
 
-const ROTATE_SPRING = { response: 0.62, damping: 0.9 };
+export const ROTATE_SPRING = { response: 0.62, damping: 0.9 };
 const MORPH_SPRING = { response: 0.7, damping: 0.92 };
 const PANE_SPRING = { response: 0.5, damping: 0.86 };
 const FADE_OUT_MS = 140;

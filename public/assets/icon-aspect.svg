@@ -1,7 +1,7 @@
-<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="56" height="56" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="39.9991" height="39.9991" viewBox="0 0 39.9991 39.9991" fill="none" xmlns="http://www.w3.org/2000/svg">
 <g id="Frame">
-<path id="Vector" d="M44.3333 7H11.6667C9.08934 7 7 9.08934 7 11.6667V44.3333C7 46.9107 9.08934 49 11.6667 49H44.3333C46.9107 49 49 46.9107 49 44.3333V11.6667C49 9.08934 46.9107 7 44.3333 7Z" stroke="#111820" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-<path id="Vector_2" d="M27.9997 16.3333H16.333V28" stroke="#111820" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-<path id="Vector_3" d="M28 39.6667H39.6667V28" stroke="#111820" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<path id="Vector" d="M31.6651 4.99981H8.33225C6.49134 4.99981 4.99899 6.49216 4.99899 8.33306V31.6659C4.99899 33.5068 6.49134 34.9991 8.33225 34.9991H31.6651C33.506 34.9991 34.9983 33.5068 34.9983 31.6659V8.33306C34.9983 6.49216 33.506 4.99981 31.6651 4.99981Z" stroke="#111820" stroke-width="1.99997" stroke-linecap="round" stroke-linejoin="round"/>
+<path id="Vector_2" d="M19.9982 11.6664H11.665V19.9995" stroke="#111820" stroke-width="1.99997" stroke-linecap="round" stroke-linejoin="round"/>
+<path id="Vector_3" d="M19.999 28.3327H28.3321V19.9995" stroke="#111820" stroke-width="1.99997" stroke-linecap="round" stroke-linejoin="round"/>
 </g>
 </svg>

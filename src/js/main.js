@@ -1,8 +1,7 @@
 import '../styles/app.css';
-import { MODES, DEVICES, GEOMETRY, modeById, visualHeight, looksPortrait } from './modes.js';
-import { DeviceStage } from './devices.js';
-import { LayoutList } from './layouts.js';
-import { ModeDropdown } from './dropdown.js';
+import { MODES, DEVICES, GEOMETRY, modeById, visualHeight } from './modes.js';
+import { DeviceStage, ROTATE_SPRING } from './devices.js';
+import { LayoutPicker } from './layouts.js';
 import { PopularSites, displayUrl } from './popular.js';
 import { layoutWidth, isMobileReady, DESKTOP_LAYOUT_WIDTH } from './viewport.js';
 import { spring } from './spring.js';
@@ -19,13 +18,35 @@ html.classList.toggle('has-sf', /Mac|iPhone|iPad|iPod/.test(navigator.userAgent)
 const uiSpring = spring({ response: 0.5, damping: 0.86 });
 html.style.setProperty('--spring', uiSpring.easing);
 html.style.setProperty('--spring-ms', `${uiSpring.duration}ms`);
+// The device's own rotation spring, so the page (panel width, mobile slot) moves in step with it.
+const deviceSpring = spring(ROTATE_SPRING);
+html.style.setProperty('--device-spring', deviceSpring.easing);
+html.style.setProperty('--device-ms', `${deviceSpring.duration}ms`);
+
+// A stable "large viewport" unit for the fixed mobile background (no jump when
+// the browser bars collapse).
+const setLvh = () => html.style.setProperty('--lvh', CSS.supports('height', '1lvh') ? '1lvh' : `${window.innerHeight / 100}px`);
+setLvh();
+
+/** Re-run the soft "value-in" animation on an element whose content just changed. */
+function swapIn(el) {
+  el.classList.remove('is-swapping');
+  void el.offsetWidth;
+  el.classList.add('is-swapping');
+}
+
+function setText(el, value) {
+  if (el.textContent === value) return;
+  el.textContent = value;
+  swapIn(el);
+}
 
 /* ------------------------------------------------------------ status */
 
 function setStatus(tone, title, detail) {
   $$('[data-status]').forEach((el) => { el.dataset.tone = tone; });
-  $$('[data-status-title]').forEach((el) => { el.textContent = title; });
-  $$('[data-status-detail]').forEach((el) => { el.textContent = detail; el.title = detail; });
+  $$('[data-status-title]').forEach((el) => setText(el, title));
+  $$('[data-status-detail]').forEach((el) => { setText(el, detail); el.title = detail; });
 }
 
 /* ------------------------------------------------------------ site state */
@@ -40,38 +61,54 @@ const site = {
 
 /* ------------------------------------------------------------ page layout
    Desktop: the 1920 × 1000 design scaled to fit. Mobile (portrait or narrow
-   windows): the 420 px design scaled to the width. The devices sit in one
-   layer that follows whichever is active, so the live site never reloads. */
+   windows): a real-pixel column. The devices sit in one layer that follows
+   whichever is active, so the live site never reloads. */
 
 let pageLayout = null;
-const mBrand = document.querySelector('.m-brand');
+const mRoot = $('m-root');
 const mSlot = $('m-slot');
+const mTest = $('m-test');
+const mMore = $('m-test-more');
 
 function mobileGeometry(mode) {
   const g = GEOMETRY.mobile;
-  const scale = g.scale[mode.id];
-  return {
-    scale,
-    height: visualHeight(mode, scale, DEVICES[mode.device]),
-    gap: looksPortrait(mode) ? g.gapAbove.portrait : g.gapAbove.landscape,
-  };
+  // Columns narrower than the design's 388 px shrink the device to fit.
+  const fit = Math.min(1, (mRoot.clientWidth - 32) / g.column);
+  const scale = g.scale[mode.id] * fit;
+  return { scale, height: visualHeight(mode, scale, DEVICES[mode.device]) };
+}
+
+/** How much taller the test card currently is than when closed (its drawer). */
+function drawerExtra() {
+  const margin = parseFloat(getComputedStyle(mMore).marginTop) || 0;
+  return mMore.getBoundingClientRect().height + margin + 12;
 }
 
 function placement(mode) {
   if (pageLayout === 'desktop') {
     const g = GEOMETRY.desktop;
-    return { cx: g.center.x, cy: g.center.y, scale: g.scale[mode.id] };
+    const c = g[mode.orient];
+    return { cx: c.x, cy: c.y, scale: g.scale[mode.id] };
   }
-  const { scale, height, gap } = mobileGeometry(mode);
-  const top = mBrand.offsetTop + mBrand.offsetHeight + gap;
-  return { cx: GEOMETRY.mobile.centerX, cy: top + height / 2, scale };
+  const { scale, height } = mobileGeometry(mode);
+  // Position against the *closed* card; --m-shift adds the drawer on top.
+  const top = mSlot.getBoundingClientRect().top + window.scrollY - drawerExtra();
+  return { cx: html.clientWidth / 2, cy: top + height / 2, scale };
 }
 
-/** The empty slot under the mobile title takes the device's height (animated in CSS). */
+/** The empty slot under the test card takes the device's height (animated in CSS). */
 function sizeSlot(mode) {
-  const { height, gap } = mobileGeometry(mode);
-  mSlot.style.setProperty('--slot-h', `${height}px`);
-  mSlot.style.setProperty('--slot-gap', `${gap}px`);
+  mSlot.style.setProperty('--slot-h', `${mobileGeometry(mode).height}px`);
+}
+
+/** Open / close the mobile popular-sites drawer; the device rides along. */
+function setDrawer(open) {
+  mTest.classList.toggle('is-open', open);
+  const toggle = $('m-test-toggle');
+  toggle.setAttribute('aria-expanded', String(open));
+  toggle.setAttribute('aria-label', open ? 'Hide popular sites' : 'Show popular sites');
+  const full = mMore.firstElementChild.scrollHeight + 24;
+  html.style.setProperty('--m-shift', open ? `${full}px` : '0px');
 }
 
 function fitPage() {
@@ -82,16 +119,14 @@ function fitPage() {
     const s = Math.min(w / 1920, h / 1000);
     html.style.setProperty('--stage-scale', String(s));
     html.style.setProperty('--stage-top', `${(h - 1000 * s) / 2}px`);
-  } else {
-    html.style.setProperty('--m-scale', String(Math.min(w / 420, 1.6)));
   }
-  if (next !== pageLayout) {
-    pageLayout = next;
-    html.dataset.layout = next;
-    if (devices.mode) {
-      sizeSlot(devices.mode);
-      devices.place(devices.mode);
-    }
+  const changed = next !== pageLayout;
+  pageLayout = next;
+  html.dataset.layout = next;
+  if (devices.mode && (changed || next === 'mobile')) {
+    sizeSlot(devices.mode);
+    if (next === 'mobile' && mTest.classList.contains('is-open')) setDrawer(true);
+    devices.place(devices.mode);
   }
 }
 
@@ -100,7 +135,12 @@ const devices = new DeviceStage($('device-layer'), {
   placement,
 });
 fitPage();
-window.addEventListener('resize', fitPage);
+let resizeTimer = null;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(fitPage, 60);
+});
+window.addEventListener('orientationchange', () => setTimeout(() => { setLvh(); fitPage(); }, 250));
 
 function normalise(raw) {
   let value = (raw || '').trim();
@@ -263,8 +303,8 @@ async function loadSite(raw) {
 /* ------------------------------------------------------------ layout pickers */
 
 function showModeStats(mode) {
-  $$('[data-stat="viewport"]').forEach((el) => { el.textContent = `${mode.viewport.width} × ${mode.viewport.height}`; });
-  $$('[data-stat="ratio"]').forEach((el) => { el.textContent = mode.ratio; });
+  $$('[data-stat="viewport"]').forEach((el) => setText(el, `${mode.viewport.width} × ${mode.viewport.height}`));
+  $$('[data-stat="ratio"]').forEach((el) => setText(el, mode.ratio));
 }
 
 async function selectMode(id) {
@@ -273,7 +313,10 @@ async function selectMode(id) {
     localStorage.setItem(MODE_KEY, id);
   } catch { /* ignore */ }
   layoutList.set(id);
-  dropdown.set(id);
+  mobileLayouts.set(id, { reveal: true });
+  // Portrait devices give the right panel 447 px, landscape ones 364 px; it
+  // animates on the device's spring, starting with the device.
+  html.dataset.orient = mode.orient;
   showModeStats(mode);
   sizeSlot(mode);
   syncQuery();
@@ -307,18 +350,18 @@ inputs.forEach((input) => {
 
 const popular = new PopularSites([
   { el: document.querySelector('[data-recents="desktop"]'), limit: 4, arrow: '/assets/icon-arrow-up-right.svg' },
-  { el: document.querySelector('[data-recents="mobile"]'), limit: 2, arrow: '/assets/m/icon-arrow-up-right.svg' },
-], { onPick: (url) => loadSite(url) });
-
-const layoutList = new LayoutList($('layouts'), { onSelect: selectMode });
-
-const dropdown = new ModeDropdown({
-  trigger: $('m-select-trigger'),
-  menu: $('m-select-menu'),
-  icon: $('m-select-icon'),
-  label: $('m-select-label'),
-  onSelect: selectMode,
+  { el: document.querySelector('[data-recents="mobile"]'), limit: 4, arrow: '/assets/icon-arrow-up-right.svg' },
+], {
+  onPick: (url) => {
+    if (pageLayout === 'mobile') setDrawer(false);
+    loadSite(url);
+  },
 });
+
+const layoutList = new LayoutPicker($('layouts'), { variant: 'desktop', onSelect: selectMode });
+const mobileLayouts = new LayoutPicker($('m-layouts'), { variant: 'mobile', onSelect: selectMode });
+
+$('m-test-toggle').addEventListener('click', () => setDrawer(!mTest.classList.contains('is-open')));
 
 // Share: the current site + screen as a link (native share sheet on touch devices).
 $$('[data-share]').forEach((btn) => {
@@ -334,12 +377,18 @@ $$('[data-share]').forEach((btn) => {
       }
       await navigator.clipboard.writeText(url);
       label.textContent = 'Link copied';
+      btn.classList.add('is-copied');
     } catch (err) {
       if (err?.name === 'AbortError') return;
       label.textContent = 'Copy failed';
     }
+    swapIn(label);
     clearTimeout(timer);
-    timer = setTimeout(() => { label.textContent = 'Share'; }, 1800);
+    timer = setTimeout(() => {
+      label.textContent = 'Share';
+      btn.classList.remove('is-copied');
+      swapIn(label);
+    }, 1800);
   });
 });
 
@@ -357,7 +406,10 @@ if (!initialMode) {
 initialMode ||= MODES[0];
 
 layoutList.set(initialMode.id);
-dropdown.set(initialMode.id);
+mobileLayouts.set(initialMode.id);
+// A shared link may open on a card that's off-screen in the mobile row.
+requestAnimationFrame(() => mobileLayouts.reveal(initialMode.id, { instant: true }));
+html.dataset.orient = initialMode.orient;
 showModeStats(initialMode);
 sizeSlot(initialMode);
 devices.place(initialMode);
@@ -365,19 +417,23 @@ setStatus('idle', 'Ready', 'Paste a URL to test');
 
 if (params.get('site')) loadSite(params.get('site'));
 
+// Entrance: the panels rise in, one after another. With the splash they arrive
+// as the background pulls into focus, so the page assembles around the phone.
+html.style.setProperty('--enter-base', withSplash ? '1100ms' : '60ms');
+html.classList.add('is-entering');
+setTimeout(() => html.classList.remove('is-entering'), withSplash ? 3600 : 1400);
+
 if (withSplash) {
   // Start unfolded, big and centred on the visible screen (device-layer coordinates).
   const mobile = pageLayout === 'mobile';
-  const ms = parseFloat(html.style.getPropertyValue('--m-scale')) || 1;
-  const viewH = mobile ? window.innerHeight / ms : 1000;
   playSplash({
     layer: $('device-layer'),
     target: devices.at(initialMode),
     real: devices.deviceFor(initialMode).el,
-    center: mobile ? { x: 210, y: viewH / 2 } : { x: 960, y: 500 },
+    center: mobile ? { x: html.clientWidth / 2, y: window.scrollY + window.innerHeight / 2 } : { x: 960, y: 500 },
     // Mobile: the whole open phone fits the screen width with a small margin.
-    startWidth: mobile ? (window.innerWidth * 0.94) / ms : 1500,
-    startHeight: mobile ? viewH * 0.66 : 960,
+    startWidth: mobile ? html.clientWidth * 0.94 : 1500,
+    startHeight: mobile ? window.innerHeight * 0.66 : 960,
     // Narrow screens: start the open phone upright so it begins bigger than it lands.
     startRotate: mobile ? -90 : 0,
   });

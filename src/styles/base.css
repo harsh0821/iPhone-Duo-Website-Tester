@@ -1,11 +1,6 @@
 /* Shared resets, the two layout canvases and the device layer that mirrors them.
-   main.js sets html[data-layout] to "desktop" or "mobile" plus the scale vars. */
-
-@property --k {
-  syntax: '<number>';
-  inherits: true;
-  initial-value: 1;
-}
+   main.js sets html[data-layout] ("desktop" | "mobile"), html[data-orient]
+   ("portrait" | "landscape") and the scale vars. */
 
 *,
 *::before,
@@ -16,22 +11,19 @@
 html,
 body {
   margin: 0;
-  background: #cfcbc4;
+  background: #d9d6d0;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-text-size-adjust: 100%;
+  /* Nothing may ever widen the page (phones would zoom out to fit it). `clip`,
+     unlike `hidden`, doesn't turn body into a scroller, so sticky still works. */
+  overflow-x: clip;
 }
 
 html[data-layout='desktop'],
 html[data-layout='desktop'] body {
   height: 100%;
   overflow: hidden;
-}
-
-/* Nothing may ever widen the page: phones would zoom out to fit it. */
-html,
-body {
-  overflow-x: hidden;
 }
 
 body {
@@ -76,7 +68,7 @@ img {
 }
 
 :focus-visible {
-  outline: 2px solid var(--blue);
+  outline: 2px solid #3f5c74;
   outline-offset: 3px;
 }
 
@@ -84,16 +76,17 @@ img {
 
 .stage,
 .m-root,
-.backdrop,
 .header-shade {
   display: none;
 }
 
 html[data-layout='desktop'] .stage,
-html[data-layout='desktop'] .backdrop,
-html[data-layout='desktop'] .header-shade,
-html[data-layout='mobile'] .m-root {
+html[data-layout='desktop'] .header-shade {
   display: block;
+}
+
+html[data-layout='mobile'] .m-root {
+  display: flex;
 }
 
 /* The desktop design is a fixed 1920 × 1000 canvas scaled to fit the window. */
@@ -108,23 +101,20 @@ html[data-layout='desktop'] .device-layer {
   transform-origin: 50% 50%;
 }
 
-/* The mobile design is 420 px wide, scaled to the screen width, and scrolls. */
-.m-root,
+/* Mobile works in real CSS pixels: the layer spans the page and scrolls with it.
+   --m-shift follows the test card as it opens, so the device moves with the slot. */
 html[data-layout='mobile'] .device-layer {
   position: absolute;
-  left: 50%;
+  left: 0;
   top: 0;
-  width: 420px;
-  transform: translateX(-50%) scale(var(--m-scale, 1));
-  transform-origin: 50% 0;
+  width: 100%;
+  transform: translateY(var(--m-shift, 0px));
+  transition: transform var(--spring-ms) var(--spring);
 }
 
 .device-layer {
   pointer-events: none;
   z-index: 2;
-}
-
-.device-layer {
   overflow-x: clip;
   overflow-y: visible;
 }
@@ -133,26 +123,32 @@ html:not([data-layout]) .device-layer {
   display: none;
 }
 
-/* Figma places the 3:2 photo at 128% height, -14% top: only its middle
-   band (1920:1000) is ever visible. Cover the window with that band. */
+/* Background. Desktop: the photo covers the window. Mobile: fixed (it never
+   scrolls), sized to the screen height and offset as in the mobile frames. */
 .backdrop {
   position: fixed;
   inset: 0;
   overflow: hidden;
+  background: #d9d6d0;
 }
 
 .backdrop::before {
   content: '';
   position: absolute;
-  left: 50%;
-  top: 50%;
-  width: max(100vw, 192vh);
-  aspect-ratio: 1536 / 1024;
-  transform: translate(-50%, -50%);
-  background: url('/assets/bg.png') center / 100% 100% no-repeat;
+  inset: 0;
+  background: url('/assets/bg-v3.jpg') center / cover no-repeat;
 }
 
-/* Soft shade behind the white title, full window width. */
+html[data-layout='mobile'] .backdrop::before {
+  inset: auto;
+  left: calc(-29.4 * var(--lvh, 1vh));
+  top: 0;
+  width: calc(192 * var(--lvh, 1vh));
+  height: calc(100 * var(--lvh, 1vh));
+  background-size: 100% 100%;
+}
+
+/* Soft shade behind the title row, full window width. */
 .header-shade {
   position: fixed;
   left: 0;
@@ -163,123 +159,88 @@ html:not([data-layout]) .device-layer {
   pointer-events: none;
 }
 
-/* ---------------------------------------------------------------- sprite icons
-   Built at 56 px and scaled by --k, so the selected layout can grow smoothly. */
+/* ---------------------------------------------------------------- shared pieces */
 
-.mode-icon {
+/* Device thumbnail tile for the layout cards. */
+.thumb {
   position: relative;
   flex: none;
-  width: calc(56px * var(--k));
-  height: calc(56px * var(--k));
-}
-
-.mode-icon__scale {
-  position: absolute;
-  left: 0;
-  top: 0;
   width: 56px;
   height: 56px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transform: scale(var(--k));
-  transform-origin: 0 0;
+  display: grid;
+  place-items: center;
+  border: 1px solid #e3e3e3;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.7);
 }
 
-.mode-icon__rot {
-  flex: none;
-  display: flex;
+.thumb img {
+  filter: drop-shadow(-3.6px 3.1px 4px rgba(0, 0, 0, 0.15));
+  transform: translateY(-0.5px);
 }
 
-.mode-icon__box {
-  width: 56px;
-  height: 56px;
-  display: flex;
-}
-
-.mode-icon__box--start {
-  align-items: flex-start;
-}
-
-.mode-icon__box--center {
-  align-items: center;
-  justify-content: center;
-}
-
-.mode-icon__crop {
+/* Status badge: the design's soft glow with an icon. Tone swaps colour + icon.
+   Only "good" is designed so far; the others are tinted placeholders. */
+.badge {
   position: relative;
-  flex: none;
+  display: grid;
+  place-items: center;
   overflow: hidden;
+  border-radius: 50%;
+  isolation: isolate;
 }
 
-.mode-icon__crop img {
-  position: absolute;
-  max-width: none;
-}
-
-/* ---------------------------------------------------------------- status dot
-   The green dot is the Figma asset; other states tint a same-size circle. */
-
-.status__dot {
-  position: relative;
-  flex: none;
-}
-
-.status__dot img {
+.badge__glow {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
-  transition: opacity 200ms;
+  object-fit: cover;
+  transition: filter 400ms var(--ease-out);
 }
 
-.status__dot::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  background: var(--dot, transparent);
-  opacity: 0;
-  transition: opacity 200ms, background-color 200ms;
+.badge__icon {
+  position: relative;
+  background: #fff;
+  -webkit-mask: var(--icon, url('/assets/icon-check.svg')) center / contain no-repeat;
+  mask: var(--icon, url('/assets/icon-check.svg')) center / contain no-repeat;
+  transition: transform 420ms var(--spring), opacity 200ms;
 }
 
-[data-status]:not([data-tone='good']) .status__dot img {
-  opacity: 0;
-}
-
-[data-status]:not([data-tone='good']) .status__dot::after {
-  opacity: 1;
-}
-
+[data-tone='good'] { --icon: url('/assets/icon-check.svg'); }
+[data-tone='warn'] { --icon: url('/assets/icon-alert.svg'); }
+[data-tone='error'] { --icon: url('/assets/icon-cross.svg'); }
 [data-tone='idle'],
-[data-tone='busy'] { --dot: var(--grey); }
-[data-tone='warn'] { --dot: var(--amber); }
-[data-tone='error'] { --dot: var(--red); }
+[data-tone='busy'] { --icon: url('/assets/icon-dash.svg'); }
 
-[data-tone='busy'] .status__dot::after {
-  animation: dot-pulse 1s ease-in-out infinite alternate;
+[data-tone='warn'] .badge__glow { filter: hue-rotate(-75deg) saturate(1.35); }
+[data-tone='error'] .badge__glow { filter: hue-rotate(-125deg) saturate(1.5); }
+[data-tone='idle'] .badge__glow,
+[data-tone='busy'] .badge__glow { filter: grayscale(1) brightness(0.92); }
+
+[data-tone='busy'] .badge__icon {
+  animation: badge-pulse 0.9s ease-in-out infinite alternate;
 }
 
-@keyframes dot-pulse {
-  from { transform: scale(0.72); opacity: 0.55; }
-  to { transform: scale(1); opacity: 1; }
+@keyframes badge-pulse {
+  from { opacity: 0.35; transform: scaleX(0.6); }
+  to { opacity: 1; transform: scaleX(1); }
 }
 
-/* ---------------------------------------------------------------- recent rows */
-
+/* Popular site rows (both layouts). */
 .recent {
   width: 100%;
   display: flex;
   align-items: center;
   border: 0;
-  background: var(--glass-row);
+  background: rgba(255, 255, 255, 0.5);
   text-align: left;
   overflow: hidden;
-  transition: background-color 180ms var(--ease-out), transform 180ms var(--ease-out);
+  transition: background-color 220ms var(--ease-out), transform 220ms var(--ease-out);
 }
 
 .recent:hover {
-  background: rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.72);
 }
 
 .recent:active {
@@ -287,7 +248,7 @@ html:not([data-layout]) .device-layer {
 }
 
 .recent[aria-current='true'] {
-  background: rgba(255, 255, 255, 0.62);
+  background: rgba(255, 255, 255, 0.8);
 }
 
 .recent__icon {
@@ -303,33 +264,6 @@ html:not([data-layout]) .device-layer {
   height: 100%;
 }
 
-/* Figma symbol sits inset 16.67% left/right, as in the design. */
-.recent__icon--figma img {
-  left: 16.67%;
-  top: -0.17%;
-  width: 66.66%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.recent__icon--site {
-  border-radius: 22.5%;
-  background: #fff;
-}
-
-.recent__icon--site img {
-  object-fit: contain;
-}
-
-.recent__icon--letter {
-  display: grid;
-  place-items: center;
-  border-radius: 22.5%;
-  background: #e5e8ec;
-  font-weight: var(--weight-semibold);
-  color: var(--text-row);
-}
-
 .recent__url {
   flex: 1 0 0;
   min-width: 1px;
@@ -342,11 +276,37 @@ html:not([data-layout]) .device-layer {
 
 .recent__go {
   flex: none;
+  width: 24px;
+  height: 24px;
+  transition: transform 260ms var(--ease-out);
 }
 
-.recent-empty {
-  color: var(--text-muted);
-  line-height: normal;
+.recent:hover .recent__go {
+  transform: translate(2px, -2px);
+}
+
+/* Values that change (viewport, ratio, status) slide in softly. */
+.is-swapping {
+  animation: value-in 380ms var(--ease-out) both;
+}
+
+@keyframes value-in {
+  from { opacity: 0; transform: translateY(6px); filter: blur(2px); }
+}
+
+/* Page entrance after the splash (or on a plain load): each block rises in turn. */
+html.is-entering [data-enter] {
+  animation: enter-up 900ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+html.is-entering [data-enter='1'] { animation-delay: var(--enter-base, 0ms); }
+html.is-entering [data-enter='2'] { animation-delay: calc(var(--enter-base, 0ms) + 90ms); }
+html.is-entering [data-enter='3'] { animation-delay: calc(var(--enter-base, 0ms) + 180ms); }
+html.is-entering [data-enter='4'] { animation-delay: calc(var(--enter-base, 0ms) + 270ms); }
+
+/* `translate` / `scale` compose with each block's own `transform` (centring etc.). */
+@keyframes enter-up {
+  from { opacity: 0; translate: 0 18px; scale: 0.985; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -355,5 +315,6 @@ html:not([data-layout]) .device-layer {
   *::after {
     transition-duration: 1ms !important;
     animation-duration: 1ms !important;
+    animation-delay: 0ms !important;
   }
 }

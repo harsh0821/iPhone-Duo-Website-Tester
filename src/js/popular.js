@@ -3,8 +3,8 @@
 const SITES = [
   { url: 'https://www.apple.com', icon: '/assets/logo-apple.svg' },
   { url: 'https://www.notion.so', icon: '/assets/logo-notion.svg' },
-  { url: 'https://www.airbnb.com', icon: '/assets/logo-airbnb.svg' },
-  { url: 'https://www.figma.com', icon: '/assets/logo-figma.png', figma: true },
+  { url: 'https://www.airbnb.co.in', icon: '/assets/logo-airbnb.svg' },
+  { url: 'https://www.youtube.com', icon: '/assets/logo-youtube.svg' },
 ];
 
 export function displayUrl(url) {
@@ -49,7 +49,7 @@ export class PopularSites {
         btn.dataset.url = site.url;
         btn.title = `Test ${site.url}`;
         btn.innerHTML = `
-          <span class="recent__icon${site.figma ? ' recent__icon--figma' : ''}"><img src="${site.icon}" alt=""></span>
+          <span class="recent__icon"><img src="${site.icon}" alt=""></span>
           <span class="recent__url">${displayUrl(site.url)}</span>
           <img class="recent__go" src="${arrow}" alt="">`;
         btn.addEventListener('click', () => this.onPick(site.url));
